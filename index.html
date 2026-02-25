@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>奇美醫院資訊室 — 滿意度智慧平台</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ── Reset & Base ─────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --T:#01B8AA; --T2:#00d4c3; --T3:#009e92; --T4:#006f69;
+  --WARN:#f59e0b; --ERR:#ef4444; --INFO:#0ea5e9; --PUR:#8b5cf6;
+  --bg:#f0faf9; --text:#0a2a28; --muted:#4a8a84; --faint:#6bb5b0; --pale:#a0d8d4;
+}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);
+  font-family:'DM Sans','Noto Sans TC',sans-serif;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:#e0f5f3;}
+::-webkit-scrollbar-thumb{background:#a0d8d4;border-radius:4px;}
+input,textarea,select,button{font-family:inherit;}
+
+/* ── Animations ───────────────────────────────────────────── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes ring{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.6);opacity:0}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.fade-up{animation:fadeUp .4s ease both;}
+.slide-up{animation:slideUp .5s ease both;}
+
+/* ── BG Decoration ────────────────────────────────────────── */
+.bg-deco{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.bg-blob{position:absolute;border-radius:50%;}
+.bg-blob-1{top:-200px;right:-150px;width:700px;height:700px;
+  background:radial-gradient(circle,rgba(1,184,170,.12) 0%,transparent 65%);}
+.bg-blob-2{bottom:-200px;left:-100px;width:650px;height:650px;
+  background:radial-gradient(circle,rgba(0,158,146,.09) 0%,transparent 65%);}
+.bg-blob-3{top:30%;left:35%;width:500px;height:500px;
+  background:radial-gradient(circle,rgba(1,212,196,.06) 0%,transparent 65%);}
+.bg-deco svg{position:absolute;}
+
+/* ── Header ───────────────────────────────────────────────── */
+header{position:sticky;top:0;z-index:100;
+  background:rgba(240,250,249,.93);backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(1,184,170,.15);
+  box-shadow:0 2px 20px rgba(1,184,170,.1);}
+.header-inner{max-width:1440px;margin:0 auto;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;height:66px;gap:16px;}
+.logo{display:flex;align-items:center;gap:14px;flex-shrink:0;}
+.logo-icon{width:44px;height:44px;border-radius:14px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--T),var(--T4));
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+  box-shadow:0 4px 16px rgba(1,184,170,.5);animation:float 4s ease-in-out infinite;}
+.logo-sub{font-size:.6rem;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;font-weight:700;}
+.logo-name{font-size:1.1rem;font-weight:800;color:var(--text);letter-spacing:-.01em;}
+nav{display:flex;gap:3px;background:rgba(1,184,170,.07);
+  border-radius:14px;padding:5px 6px;border:1px solid rgba(1,184,170,.15);}
+.tab-btn{padding:7px 20px;border-radius:10px;border:none;cursor:pointer;
+  font-size:.83rem;font-weight:700;color:var(--muted);background:transparent;
+  display:flex;align-items:center;gap:6px;transition:all .2s;}
+.tab-btn.active{color:#fff;background:linear-gradient(135deg,var(--T),var(--T4));
+  box-shadow:0 3px 14px rgba(1,184,170,.45);}
+.header-right{display:flex;align-items:center;gap:16px;flex-shrink:0;}
+.ticker-box{display:flex;align-items:center;gap:8px;
+  background:rgba(1,184,170,.08);border:1px solid rgba(1,184,170,.2);
+  border-radius:12px;padding:6px 14px;}
+.ticker-label{font-size:.68rem;color:var(--muted);font-weight:600;}
+.ticker-val{font-size:1rem;font-weight:800;color:var(--T);font-family:'DM Mono',monospace;}
+.live-box{display:flex;align-items:center;gap:7px;
+  background:rgba(1,184,170,.07);border:1px solid rgba(1,184,170,.2);
+  border-radius:20px;padding:6px 14px;}
+.live-dot-wrap{position:relative;width:9px;height:9px;}
+.live-dot,.live-ring{width:9px;height:9px;border-radius:50%;background:var(--T);position:absolute;top:0;left:0;}
+.live-ring{animation:ring 2s ease-in-out infinite;}
+.live-label{font-size:.7rem;color:var(--T3);font-weight:700;letter-spacing:.06em;}
+
+/* ── Main & Tabs ──────────────────────────────────────────── */
+main{max-width:1440px;margin:0 auto;padding:32px 28px;position:relative;z-index:1;}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;animation:fadeUp .4s ease;}
+
+/* ── Page Header ──────────────────────────────────────────── */
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;
+  margin-bottom:28px;flex-wrap:wrap;gap:12px;}
+.page-eyebrow{font-size:.65rem;color:var(--muted);letter-spacing:.2em;
+  text-transform:uppercase;margin-bottom:4px;font-weight:700;}
+.page-title{font-size:1.9rem;font-weight:800;color:var(--text);letter-spacing:-.02em;}
+.page-sub{color:var(--muted);font-size:.83rem;margin-top:6px;}
+.date-badge{font-size:.75rem;color:var(--muted);font-weight:600;
+  background:rgba(1,184,170,.07);border:1px solid rgba(1,184,170,.15);
+  border-radius:10px;padding:7px 16px;}
+.filter-chips{display:flex;gap:8px;flex-wrap:wrap;}
+.filter-chip{padding:6px 16px;border-radius:20px;border:1.5px solid rgba(1,184,170,.25);
+  background:transparent;color:var(--muted);font-size:.78rem;font-weight:700;cursor:pointer;transition:all .2s;}
+.filter-chip.active{background:var(--T);border-color:var(--T);color:#fff;}
+
+/* ── Card ─────────────────────────────────────────────────── */
+.card{background:rgba(255,255,255,.9);border:1.5px solid rgba(1,184,170,.15);
+  border-radius:20px;padding:24px;position:relative;overflow:hidden;
+  box-shadow:0 4px 24px rgba(1,184,170,.08),0 1px 4px rgba(0,0,0,.04);
+  backdrop-filter:blur(12px);transition:box-shadow .25s,transform .25s;}
+.card:hover{box-shadow:0 12px 40px rgba(1,184,170,.16);transform:translateY(-2px);}
+.section-title{font-size:.75rem;color:var(--muted);font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;margin:0 0 18px;
+  display:flex;align-items:center;gap:8px;}
+.card-top-bar{position:absolute;top:0;left:0;right:0;height:3px;}
+
+/* ── KPI Row ──────────────────────────────────────────────── */
+.kpi-row{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+.kpi-card{flex:1;min-width:180px;border-radius:20px;padding:22px 22px 18px;
+  position:relative;overflow:hidden;backdrop-filter:blur(12px);
+  transition:box-shadow .25s,transform .25s;}
+.kpi-card:hover{transform:translateY(-2px);}
+.kpi-card-inner-circle{position:absolute;bottom:-24px;right:-16px;
+  width:80px;height:80px;border-radius:50%;}
+.kpi-top-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.kpi-label{font-size:.66rem;color:var(--muted);letter-spacing:.1em;
+  text-transform:uppercase;font-weight:700;line-height:1.3;}
+.kpi-icon-box{width:34px;height:34px;border-radius:10px;display:flex;
+  align-items:center;justify-content:center;font-size:1.1rem;}
+.kpi-val-row{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;}
+.kpi-val{font-size:2.4rem;font-weight:800;margin:0;line-height:1;font-family:'DM Mono',monospace;}
+.kpi-sub{font-size:.7rem;color:var(--faint);margin-top:6px;font-weight:500;}
+
+/* ── Rows ─────────────────────────────────────────────────── */
+.row-2,.row-3,.row-4{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;}
+.row-2>.card,.row-3>.card,.row-4>.card{min-width:0;}
+.flex-1{flex:1;}
+.flex-15{flex:1.5;}
+.flex-16{flex:1.6;}
+.flex-08{flex:.85;}
+.flex-07{flex:.7;}
+.flex-06{flex:.6;}
+.flex-08r{flex:.8;}
+
+/* ── Chart Containers ─────────────────────────────────────── */
+.chart-wrap{position:relative;width:100%;}
+
+/* ── Gauge Grid ───────────────────────────────────────────── */
+.gauge-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+.gauge-item{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.gauge-label{font-size:.72rem;color:var(--muted);font-weight:600;text-align:center;}
+
+/* ── Bar Legend ───────────────────────────────────────────── */
+.bar-legend{display:flex;gap:10px;flex-wrap:wrap;}
+.bar-legend-item{display:flex;align-items:center;gap:4px;font-size:.68rem;color:var(--muted);}
+.legend-dot{width:8px;height:8px;border-radius:2px;display:inline-block;}
+
+/* ── Pie Legend ───────────────────────────────────────────── */
+.pie-legend{display:flex;flex-direction:column;gap:7px;margin-top:10px;}
+.pie-legend-row{display:flex;align-items:center;gap:8px;}
+.pie-legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+.pie-bar-wrap{flex:1;background:#e8f7f5;border-radius:4px;height:6px;overflow:hidden;}
+.pie-bar-fill{height:100%;border-radius:4px;transition:width 1s ease;}
+.pie-pct{width:32px;font-size:.72rem;font-weight:600;text-align:right;}
+
+/* ── Ranking ──────────────────────────────────────────────── */
+.rank-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.rank-badge{width:20px;height:20px;border-radius:6px;font-size:.65rem;font-weight:800;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.rank-name{width:60px;font-size:.75rem;color:var(--text);font-weight:600;flex-shrink:0;}
+.rank-bar-wrap{flex:1;background:#e8f7f5;border-radius:6px;height:8px;overflow:hidden;}
+.rank-bar-fill{height:100%;border-radius:6px;transition:width 1s ease;}
+.rank-val{width:28px;font-size:.78rem;font-weight:700;text-align:right;font-family:'DM Mono',monospace;}
+
+/* ── Progress Rows ────────────────────────────────────────── */
+.prog-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.prog-label{width:72px;font-size:.75rem;color:var(--muted);font-weight:600;flex-shrink:0;}
+.prog-bar-wrap{flex:1;background:#e8f7f5;border-radius:6px;height:8px;overflow:hidden;}
+.prog-bar-fill{height:100%;border-radius:6px;transition:width 1s ease;}
+.prog-val{width:32px;font-size:.78rem;font-weight:700;text-align:right;}
+
+/* ── Comment Cards ────────────────────────────────────────── */
+.comment-card{border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
+.comment-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;}
+.comment-dept{font-size:.68rem;font-weight:700;padding:2px 10px;border-radius:20px;letter-spacing:.06em;}
+.comment-time{font-size:.68rem;color:#94b8b4;}
+.comment-stars{display:flex;gap:3px;}
+.comment-star{font-size:.85rem;}
+.comment-text{color:#1a4a47;font-size:.83rem;line-height:1.6;}
+
+/* ── Toast ────────────────────────────────────────────────── */
+#toast{position:fixed;bottom:28px;right:28px;z-index:999;
+  background:#fff;border:1.5px solid rgba(1,184,170,.5);border-radius:14px;
+  padding:13px 22px;color:var(--T4);font-weight:700;font-size:.9rem;
+  box-shadow:0 8px 32px rgba(1,184,170,.25);
+  opacity:0;transform:translateY(10px);pointer-events:none;
+  transition:opacity .3s,transform .3s;}
+#toast.show{opacity:1;transform:translateY(0);}
+
+/* ── Survey ───────────────────────────────────────────────── */
+.survey-wrap{max-width:680px;margin:0 auto;}
+.stats-banner{border-radius:20px;padding:20px 28px;margin-bottom:20px;
+  display:flex;gap:32px;flex-wrap:wrap;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,var(--T),var(--T4));
+  box-shadow:0 8px 32px rgba(1,184,170,.35);}
+.stats-banner-deco{position:absolute;border-radius:50%;background:rgba(255,255,255,.07);}
+.stat-label{font-size:.65rem;color:rgba(255,255,255,.7);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;font-weight:600;}
+.stat-val{font-size:1.8rem;font-weight:800;color:#fff;line-height:1;font-family:'DM Mono',monospace;}
+.form-label{display:block;font-size:.7rem;color:var(--muted);font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;}
+.form-label .req{color:var(--ERR);}
+.form-label .opt{color:var(--pale);font-weight:400;text-transform:none;letter-spacing:0;}
+.star-row{display:flex;gap:8px;margin-bottom:10px;}
+.star{font-size:2.2rem;cursor:pointer;color:#d1f0ee;transition:all .15s;display:inline-block;}
+.star.active,.star:hover{color:#f59e0b;transform:scale(1.2) translateY(-2px);
+  filter:drop-shadow(0 2px 6px rgba(245,166,35,.35));}
+.star-msg{display:inline-flex;align-items:center;gap:6px;padding:5px 16px;
+  background:rgba(1,184,170,.12);border:1px solid rgba(1,184,170,.3);
+  border-radius:20px;color:var(--T4);font-size:.8rem;font-weight:700;}
+.star-msg-dot{width:6px;height:6px;border-radius:50%;background:var(--T);}
+select,input[type=text],textarea{
+  width:100%;padding:13px 16px;
+  background:rgba(1,184,170,.04);border:1.5px solid rgba(1,184,170,.2);
+  border-radius:12px;color:var(--text);font-size:.9rem;transition:all .2s;outline:none;}
+select:focus,input:focus,textarea:focus{
+  border-color:rgba(1,184,170,.6);box-shadow:0 0 0 3px rgba(1,184,170,.14);}
+select{appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2301B8AA' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;cursor:pointer;}
+textarea{resize:vertical;line-height:1.7;}
+.char-count{color:var(--pale);font-size:.7rem;text-align:right;margin-top:4px;}
+.dim-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.dim-card{background:rgba(1,184,170,.05);border:1px solid rgba(1,184,170,.15);
+  border-radius:12px;padding:12px 14px;}
+.dim-label{font-size:.75rem;color:var(--muted);font-weight:600;margin-bottom:8px;}
+.dim-stars{display:flex;gap:4px;}
+.dim-star{font-size:1.1rem;color:#d1f0ee;}
+.dim-star.active{color:#f59e0b;}
+.submit-btn{width:100%;padding:17px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--T),var(--T4));
+  border-radius:14px;color:#fff;font-weight:800;font-size:1rem;
+  letter-spacing:.04em;box-shadow:0 6px 24px rgba(1,184,170,.38);
+  transition:all .2s;}
+.submit-btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(1,184,170,.45);}
+.submit-btn:active{transform:translateY(0);}
+.success-panel{text-align:center;padding:52px 0;animation:fadeUp .4s ease;}
+.success-icon{font-size:5rem;margin-bottom:16px;display:block;animation:float 2s ease-in-out infinite;}
+.success-title{font-size:1.4rem;font-weight:800;color:var(--T);margin-bottom:8px;}
+.success-sub{color:var(--muted);font-size:.85rem;}
+
+/* ── AI ───────────────────────────────────────────────────── */
+.feature-cards{display:flex;gap:14px;margin-bottom:20px;flex-wrap:wrap;}
+.feature-card{flex:1;min-width:160px;background:rgba(255,255,255,.88);
+  border:1.5px solid rgba(1,184,170,.15);border-radius:16px;padding:16px 18px;
+  box-shadow:0 2px 12px rgba(1,184,170,.08);}
+.feature-ico{width:36px;height:36px;border-radius:10px;
+  background:rgba(1,184,170,.14);display:flex;align-items:center;
+  justify-content:center;font-size:1.3rem;margin-bottom:10px;}
+.feature-title{font-weight:700;color:var(--text);margin-bottom:4px;font-size:.9rem;}
+.feature-desc{font-size:.75rem;color:var(--muted);line-height:1.5;}
+.quick-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
+.chip{padding:7px 16px;border-radius:20px;border:1.5px solid rgba(1,184,170,.25);
+  background:rgba(1,184,170,.08);color:var(--T4);font-size:.78rem;font-weight:700;
+  cursor:pointer;transition:all .2s;}
+.chip:hover{background:rgba(1,184,170,.14);border-color:rgba(1,184,170,.45);}
+.ai-input-row{display:flex;gap:12px;}
+.ai-input{flex:1;padding:13px 18px;background:rgba(1,184,170,.04);
+  border:1.5px solid rgba(1,184,170,.2);border-radius:12px;
+  color:var(--text);font-size:.9rem;outline:none;transition:all .2s;}
+.ai-input:focus{border-color:rgba(1,184,170,.6);box-shadow:0 0 0 3px rgba(1,184,170,.14);}
+.ai-btn{padding:13px 28px;border:none;cursor:pointer;white-space:nowrap;
+  background:linear-gradient(135deg,var(--T),var(--T4));
+  border-radius:12px;color:#fff;font-weight:800;font-size:.88rem;
+  box-shadow:0 4px 18px rgba(1,184,170,.35);transition:all .2s;}
+.ai-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(1,184,170,.45);}
+.ai-btn:disabled{background:rgba(1,184,170,.3);color:var(--muted);cursor:not-allowed;
+  transform:none;box-shadow:none;}
+.loading-card{text-align:center;padding:52px 28px;}
+.spinner{width:56px;height:56px;border-radius:50%;margin:0 auto 20px;
+  border:3px solid rgba(1,184,170,.3);border-top-color:var(--T);
+  animation:spin .85s linear infinite;}
+.loading-title{color:var(--T);font-weight:700;margin-bottom:6px;font-size:1rem;}
+.loading-sub{color:var(--muted);font-size:.82rem;}
+.ai-result-card{border:1.5px solid rgba(1,184,170,.3)!important;
+  box-shadow:0 6px 32px rgba(1,184,170,.14)!important;}
+.ai-result-bar{position:absolute;top:0;left:0;right:0;height:3px;border-radius:20px 20px 0 0;
+  background:linear-gradient(90deg,var(--T),var(--T2));}
+.ai-result-head{display:flex;gap:16px;margin-bottom:18px;}
+.ai-bot-icon{width:48px;height:48px;border-radius:14px;flex-shrink:0;
+  background:linear-gradient(135deg,rgba(1,184,170,.2),rgba(0,212,195,.2));
+  border:1.5px solid rgba(1,184,170,.35);display:flex;align-items:center;
+  justify-content:center;font-size:26px;}
+.ai-eyebrow{font-size:.65rem;color:var(--muted);font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;}
+.ai-text{color:var(--text);line-height:1.85;font-size:.93rem;}
+.ai-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.ai-tag{padding:4px 12px;border-radius:20px;background:rgba(1,184,170,.12);
+  border:1px solid rgba(1,184,170,.3);color:var(--T4);font-size:.75rem;font-weight:600;}
+.ai-insight{background:rgba(1,184,170,.08);border:1px solid rgba(1,184,170,.2);
+  border-radius:12px;padding:13px 18px;}
+.ai-insight p{color:var(--T4);font-weight:700;font-size:.88rem;}
+.ai-charts{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;}
+.ai-charts>.card{flex:1.2;min-width:280px;}
+.ai-charts>.card:last-child{flex:.8;min-width:220px;}
+
+/* ── Footer ───────────────────────────────────────────────── */
+footer{border-top:1px solid rgba(1,184,170,.12);margin-top:48px;
+  padding:22px 28px;text-align:center;color:var(--pale);font-size:.72rem;
+  letter-spacing:.06em;font-weight:500;}
+footer span.sep{margin:0 12px;color:#c8eeeb;}
+
+/* ── RWD ──────────────────────────────────────────────────── */
+@media(max-width:900px){
+  .kpi-row,.row-2,.row-3,.row-4{flex-direction:column;}
+  .header-inner{flex-wrap:wrap;height:auto;padding:12px 16px;gap:10px;}
+  nav{width:100%;}
+  .tab-btn{flex:1;justify-content:center;}
+  .header-right{width:100%;}
+  .page-header{flex-direction:column;align-items:flex-start;}
+  .dim-grid{grid-template-columns:1fr;}
+}
+@media(max-width:600px){
+  main{padding:20px 16px;}
+  .stats-banner{gap:16px;}
+  .feature-cards{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+
+<!-- BG Decoration -->
+<div class="bg-deco">
+  <div class="bg-blob bg-blob-1"></div>
+  <div class="bg-blob bg-blob-2"></div>
+  <div class="bg-blob bg-blob-3"></div>
+  <svg style="top:120px;right:80px;opacity:.07" width="180" height="180">
+    <circle cx="90" cy="90" r="70" fill="none" stroke="#01B8AA" stroke-width="1.5"/>
+    <circle cx="90" cy="90" r="50" fill="none" stroke="#01B8AA" stroke-width="1"/>
+    <circle cx="90" cy="90" r="30" fill="none" stroke="#01B8AA" stroke-width=".5"/>
+  </svg>
+  <svg style="bottom:180px;left:60px;opacity:.06" width="120" height="120">
+    <polygon points="60,10 110,95 10,95" fill="none" stroke="#01B8AA" stroke-width="1.5"/>
+    <polygon points="60,30 90,80 30,80" fill="none" stroke="#01B8AA" stroke-width="1"/>
+  </svg>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">⚕</div>
+      <div>
+        <div class="logo-sub">奇美醫院資訊室</div>
+        <div class="logo-name">滿意度智慧平台</div>
+      </div>
+    </div>
+    <nav>
+      <button class="tab-btn active" data-tab="dashboard">📊 儀表板</button>
+      <button class="tab-btn" data-tab="survey">✍️ 填寫意見</button>
+      <button class="tab-btn" data-tab="ai">🤖 AI 分析</button>
+    </nav>
+    <div class="header-right">
+      <div class="ticker-box">
+        <span class="ticker-label">即時均分</span>
+        <span class="ticker-val" id="headerAvg">4.38</span>
+        <canvas id="sparkCanvas" width="80" height="32" style="display:block;"></canvas>
+      </div>
+      <div class="live-box">
+        <div class="live-dot-wrap">
+          <div class="live-dot"></div>
+          <div class="live-ring"></div>
+        </div>
+        <span class="live-label">即時同步</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<main>
+
+<!-- ════ DASHBOARD ════ -->
+<div id="tab-dashboard" class="tab-pane active">
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">即時統計總覽</p>
+      <h2 class="page-title">數據儀表板</h2>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <span class="date-badge">📅 2026 / 02 / 25 &nbsp;·&nbsp; 每 30 秒更新</span>
+      <div class="filter-chips">
+        <button class="filter-chip">今日</button>
+        <button class="filter-chip">本週</button>
+        <button class="filter-chip active">本月</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi-row" id="kpiRow"></div>
+
+  <!-- Row 2: Area + Gauge -->
+  <div class="row-2">
+    <div class="card flex-16">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
+        <h3 class="section-title" style="margin:0;">📈 近 7 日滿意度趨勢</h3>
+        <span style="font-size:.72rem;color:var(--T);font-weight:700;background:rgba(1,184,170,.12);padding:3px 10px;border-radius:20px;">↑ 0.3 本週</span>
+      </div>
+      <div class="chart-wrap"><canvas id="trendChart" height="220"></canvas></div>
+    </div>
+    <div class="card flex-08">
+      <h3 class="section-title">🎯 服務面向評分</h3>
+      <div class="gauge-grid" id="gaugeGrid"></div>
+    </div>
+  </div>
+
+  <!-- Row 3: Bar + Pie + Radar -->
+  <div class="row-3">
+    <div class="card flex-15">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+        <h3 class="section-title" style="margin:0;">🏥 各部門滿意度</h3>
+        <div class="bar-legend">
+          <div class="bar-legend-item"><span class="legend-dot" style="background:#01B8AA;"></span>≥4.5</div>
+          <div class="bar-legend-item"><span class="legend-dot" style="background:#00d4c3;"></span>≥4.2</div>
+          <div class="bar-legend-item"><span class="legend-dot" style="background:#5dd8cf;"></span>&lt;4.2</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="deptChart" height="230"></canvas></div>
+    </div>
+    <div class="card flex-07">
+      <h3 class="section-title">🎯 評分分布</h3>
+      <div class="chart-wrap" style="height:165px;"><canvas id="pieChart"></canvas></div>
+      <div class="pie-legend" id="pieLegend"></div>
+    </div>
+    <div class="card" style="flex:.8;">
+      <h3 class="section-title">🕸 多維度分析</h3>
+      <div class="chart-wrap"><canvas id="radarChart" height="220"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Row 4: Ranking + Monthly + Comments -->
+  <div class="row-4">
+    <div class="card" style="flex:.9;">
+      <h3 class="section-title">📊 部門排行榜</h3>
+      <div id="rankingList"></div>
+    </div>
+    <div class="card" style="flex:.6;">
+      <h3 class="section-title">📅 月趨勢</h3>
+      <div class="chart-wrap"><canvas id="monthlyChart" height="130"></canvas></div>
+      <div style="margin-top:16px;" id="progRows"></div>
+    </div>
+    <div class="card flex-1">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+        <h3 class="section-title" style="margin:0;">💬 最新意見回饋</h3>
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--ERR);box-shadow:0 0 0 3px rgba(239,68,68,.3);flex-shrink:0;"></div>
+      </div>
+      <div id="commentList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ SURVEY ════ -->
+<div id="tab-survey" class="tab-pane">
+  <div class="survey-wrap">
+    <div style="margin-bottom:32px;">
+      <p class="page-eyebrow">意見回饋</p>
+      <h2 class="page-title">填寫滿意度</h2>
+      <p class="page-sub">您的意見是我們持續改善服務的最大動力</p>
+    </div>
+
+    <!-- Stats Banner -->
+    <div class="stats-banner">
+      <div class="stats-banner-deco" style="width:120px;height:120px;right:-20px;top:-20px;"></div>
+      <div class="stats-banner-deco" style="width:80px;height:80px;right:40px;bottom:-30px;"></div>
+      <div>
+        <div class="stat-label">今日已收集</div>
+        <div class="stat-val" id="bannerToday">247則</div>
+      </div>
+      <div>
+        <div class="stat-label">本月平均分</div>
+        <div class="stat-val" id="bannerAvg">4.38★</div>
+      </div>
+      <div>
+        <div class="stat-label">回饋率</div>
+        <div class="stat-val">89%</div>
+      </div>
+    </div>
+
+    <div class="card" id="surveyCard">
+      <div id="surveyForm">
+        <div style="display:flex;flex-direction:column;gap:26px;">
+          <!-- Stars -->
+          <div>
+            <label class="form-label">整體滿意度評分 <span class="req">*</span></label>
+            <div class="star-row" id="starRow">
+              <span class="star" data-val="1">★</span>
+              <span class="star" data-val="2">★</span>
+              <span class="star" data-val="3">★</span>
+              <span class="star" data-val="4">★</span>
+              <span class="star" data-val="5">★</span>
+            </div>
+            <div class="star-msg" id="starMsg" style="display:none;">
+              <span class="star-msg-dot"></span>
+              <span id="starMsgText"></span>
+            </div>
+          </div>
+
+          <!-- Dept -->
+          <div>
+            <label class="form-label">就診部門 <span class="req">*</span></label>
+            <select id="deptSelect">
+              <option value="">請選擇部門</option>
+              <option>急診室</option><option>內科</option><option>外科</option>
+              <option>婦產科</option><option>小兒科</option><option>骨科</option>
+              <option>眼科</option><option>耳鼻喉科</option><option>心臟科</option><option>神經科</option>
+            </select>
+          </div>
+
+          <!-- Dimension Ratings -->
+          <div>
+            <label class="form-label">細項評分</label>
+            <div class="dim-grid">
+              <div class="dim-card">
+                <div class="dim-label">😊 醫護親切度</div>
+                <div class="dim-stars">
+                  <span class="dim-star active">★</span><span class="dim-star active">★</span>
+                  <span class="dim-star active">★</span><span class="dim-star active">★</span>
+                  <span class="dim-star">★</span>
+                </div>
+              </div>
+              <div class="dim-card">
+                <div class="dim-label">🩺 醫療品質</div>
+                <div class="dim-stars">
+                  <span class="dim-star active">★</span><span class="dim-star active">★</span>
+                  <span class="dim-star active">★</span><span class="dim-star active">★</span>
+                  <span class="dim-star active">★</span>
+                </div>
+              </div>
+              <div class="dim-card">
+                <div class="dim-label">⏱ 等待時間</div>
+                <div class="dim-stars">
+                  <span class="dim-star active">★</span><span class="dim-star active">★</span>
+                  <span class="dim-star active">★</span><span class="dim-star">★</span>
+                  <span class="dim-star">★</span>
+                </div>
+              </div>
+              <div class="dim-card">
+                <div class="dim-label">✨ 環境整潔</div>
+                <div class="dim-stars">
+                  <span class="dim-star active">★</span><span class="dim-star active">★</span>
+                  <span class="dim-star active">★</span><span class="dim-star active">★</span>
+                  <span class="dim-star active">★</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comment -->
+          <div>
+            <label class="form-label">意見回饋 <span class="opt">（選填）</span></label>
+            <textarea id="commentInput" rows="4" maxlength="500" placeholder="請輸入您的具體建議或感謝…"></textarea>
+            <div class="char-count"><span id="charCount">0</span> / 500</div>
+          </div>
+
+          <button class="submit-btn" id="submitBtn">送出意見 →</button>
+        </div>
+      </div>
+
+      <div id="surveySuccess" class="success-panel" style="display:none;">
+        <span class="success-icon">🎉</span>
+        <p class="success-title">感謝您的寶貴意見！</p>
+        <p class="success-sub">數據已即時更新至統計儀表板</p>
+        <div style="display:flex;justify-content:center;gap:8px;margin-top:20px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--T);animation:float 1s ease-in-out infinite;"></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--T2);animation:float 1.3s ease-in-out infinite;"></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:#5dd8cf;animation:float 1.6s ease-in-out infinite;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ AI ════ -->
+<div id="tab-ai" class="tab-pane">
+  <div style="margin-bottom:28px;">
+    <p class="page-eyebrow">人工智慧</p>
+    <h2 class="page-title">AI 智慧分析引擎</h2>
+    <p class="page-sub">輸入問題，AI 將自動分析滿意度資料並提供洞察</p>
+  </div>
+
+  <div class="feature-cards">
+    <div class="feature-card">
+      <div class="feature-ico">🔍</div>
+      <div class="feature-title">趨勢分析</div>
+      <div class="feature-desc">自動辨識滿意度變化趨勢</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-ico">⚠️</div>
+      <div class="feature-title">異常偵測</div>
+      <div class="feature-desc">即時警示急遽下滑的部門</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-ico">💡</div>
+      <div class="feature-title">改善建議</div>
+      <div class="feature-desc">AI 生成具體行動方案</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <p class="section-title">快速提問</p>
+    <div class="quick-chips">
+      <button class="chip">分析整體滿意度趨勢</button>
+      <button class="chip">等待時間問題分析</button>
+      <button class="chip">表現最佳部門是哪些</button>
+      <button class="chip">急診室如何改善</button>
+      <button class="chip">本月異常警示</button>
+    </div>
+    <div class="ai-input-row">
+      <input type="text" class="ai-input" id="aiInput" placeholder="輸入您的分析問題，按 Enter 送出…"/>
+      <button class="ai-btn" id="aiBtn">🔍 分析</button>
+    </div>
+  </div>
+
+  <div id="aiLoading" style="display:none;">
+    <div class="card loading-card">
+      <div class="spinner"></div>
+      <p class="loading-title">AI 正在分析資料</p>
+      <p class="loading-sub">正在解讀滿意度模式與趨勢…</p>
+    </div>
+  </div>
+
+  <div id="aiResult" style="display:none;">
+    <div class="card ai-result-card" style="margin-bottom:16px;">
+      <div class="ai-result-bar"></div>
+      <div class="ai-result-head">
+        <div class="ai-bot-icon">🤖</div>
+        <div style="flex:1;">
+          <p class="ai-eyebrow">AI 分析結果</p>
+          <p class="ai-text" id="aiText"></p>
+        </div>
+      </div>
+      <div class="ai-tags" id="aiTags"></div>
+      <div class="ai-insight"><p id="aiInsight"></p></div>
+    </div>
+    <div class="ai-charts">
+      <div class="card">
+        <h3 class="section-title">📊 相關部門數據</h3>
+        <div class="chart-wrap"><canvas id="aiBarChart" height="200"></canvas></div>
+      </div>
+      <div class="card">
+        <h3 class="section-title">🕸 指標雷達圖</h3>
+        <div class="chart-wrap"><canvas id="aiRadarChart" height="200"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <span>奇美醫療財團法人奇美醫院 · 資訊室</span>
+  <span class="sep">·</span>
+  <span>滿意度智慧平台 v3.0</span>
+  <span class="sep">·</span>
+  <span>資料僅供示意</span>
+</footer>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────
+const T='#01B8AA',T2='#00d4c3',T3='#009e92',T4='#006f69';
+const WARN='#f59e0b',ERR='#ef4444',INFO='#0ea5e9',PUR='#8b5cf6';
+
+let state = {
+  kpi:{ today:247, avg:4.38, month:5821, nps:72 },
+  trend:[
+    {date:'02/19',avg:4.1,count:210},{date:'02/20',avg:4.3,count:235},
+    {date:'02/21',avg:3.9,count:198},{date:'02/22',avg:4.5,count:262},
+    {date:'02/23',avg:4.2,count:241},{date:'02/24',avg:4.6,count:278},
+    {date:'02/25',avg:4.4,count:247},
+  ],
+  depts:[
+    {dept:'急診室',avg:3.8,count:312},{dept:'內科',avg:4.5,count:540},
+    {dept:'外科',avg:4.2,count:388},{dept:'婦產科',avg:4.7,count:298},
+    {dept:'小兒科',avg:4.6,count:324},{dept:'骨科',avg:4.1,count:267},
+    {dept:'眼科',avg:4.4,count:215},{dept:'耳鼻喉科',avg:4.3,count:201},
+  ],
+  pie:[
+    {name:'5 星',value:38,color:T},{name:'4 星',value:30,color:T2},
+    {name:'3 星',value:18,color:'#5dd8cf'},{name:'2 星',value:9,color:WARN},
+    {name:'1 星',value:5,color:ERR},
+  ],
+  rating:0,
+};
+
+const radarData = {
+  labels:['親切度','環境整潔','等待時間','醫療品質','溝通能力','掛號便利'],
+  values:[4.8,4.5,3.6,4.7,4.6,4.0],
+};
+const monthlyData = {
+  labels:['10月','11月','12月','1月','2月'],
+  values:[4.1,4.2,4.0,4.3,4.4],
+};
+const progData = [
+  {label:'醫護態度',value:4.8,color:T},
+  {label:'醫療品質',value:4.7,color:T2},
+  {label:'環境整潔',value:4.5,color:INFO},
+  {label:'等待時間',value:3.6,color:WARN},
+];
+const comments = [
+  {dept:'婦產科',star:5,text:'護士非常親切，環境也很整潔，整體體驗超出預期！',time:'10 分鐘前'},
+  {dept:'急診室',star:2,text:'等待時間太長，希望能改善分流機制。',time:'23 分鐘前'},
+  {dept:'小兒科',star:5,text:'醫師耐心解說，孩子不再害怕看診了。',time:'41 分鐘前'},
+  {dept:'內科',star:4,text:'整體滿意，掛號系統可以更直覺一些。',time:'58 分鐘前'},
+];
+const AI_MAP = {
+  default:{
+    text:'根據近 30 天資料，整體滿意度呈穩定上升趨勢（+0.3），婦產科與小兒科持續領先。急診室尖峰時段滿意度明顯下滑，建議檢視人力配置。負面關鍵字集中於「等待時間」（42%）與「停車困難」（28%）。',
+    tags:['等待時間','醫護態度','環境品質'],
+    insight:'⚡ 本週平均滿意度 4.4（↑0.2），優於上月同期。',
+  },
+  wait:{
+    text:'等待時間抱怨分析：急診室高峰平均等待 87 分鐘，建議導入分流預檢系統。掛號等待約 23 分鐘，App 預約可有效改善。等待時間滿意度評分 3.2 為所有指標最低。',
+    tags:['急診壅塞','掛號流程','預約系統'],
+    insight:'🔴 急診等待時間問題拖累整體評分約 -0.5 分。',
+  },
+  best:{
+    text:'婦產科（4.7）連續三個月第一，主要優勢為醫護親切度（4.9）與環境整潔（4.8）。小兒科（4.6）緊追在後，家長對醫師溝通能力給予高度肯定。建議提取服務 SOP 作為全院標竿。',
+    tags:['婦產科','小兒科','標竿學習'],
+    insight:'✅ 建議：將婦產科服務流程作為全院培訓教材推廣。',
+  },
+};
+
+// ── Helpers ───────────────────────────────────────────────────────
+function animateNumber(el, from, to, dec, sfx, dur=900) {
+  const t0 = performance.now();
+  function tick(now) {
+    const p = Math.min((now-t0)/dur, 1);
+    const e = 1 - Math.pow(1-p, 4);
+    const v = from + (to-from)*e;
+    el.textContent = (dec ? v.toFixed(dec) : Math.round(v)) + (sfx||'');
+    if(p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+function barColor(v) {
+  return v>=4.5 ? T : v>=4.2 ? T2 : v>=4.0 ? '#5dd8cf' : WARN;
+}
+
+function hexToRgba(hex, a) {
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// ── Chart.js Global Defaults ──────────────────────────────────────
+Chart.defaults.font.family = "'DM Sans','Noto Sans TC',sans-serif";
+Chart.defaults.plugins.legend.display = false;
+Chart.defaults.plugins.tooltip.backgroundColor = '#fff';
+Chart.defaults.plugins.tooltip.titleColor = '#4a8a84';
+Chart.defaults.plugins.tooltip.bodyColor = T;
+Chart.defaults.plugins.tooltip.borderColor = '#b3e8e4';
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+Chart.defaults.plugins.tooltip.cornerRadius = 10;
+Chart.defaults.plugins.tooltip.padding = 10;
+Chart.defaults.plugins.tooltip.titleFont = {size:11};
+Chart.defaults.plugins.tooltip.bodyFont = {size:13, weight:'bold'};
+Chart.defaults.plugins.tooltip.callbacks = {
+  labelColor: (ctx)=>({backgroundColor:ctx.dataset.borderColor||T,borderColor:'transparent',borderRadius:3}),
+};
+
+let charts = {};
+
+// ── Spark Canvas ──────────────────────────────────────────────────
+function drawSpark(canvasId, data, color) {
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w=canvas.width, h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const max=Math.max(...data), min=Math.min(...data);
+  const pts = data.map((v,i)=>({
+    x:i/(data.length-1)*w,
+    y:h-(v-min)/(max-min||1)*h
+  }));
+  ctx.beginPath();
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineJoin='round';
+  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+  ctx.stroke();
+  const last=pts[pts.length-1];
+  ctx.beginPath();ctx.fillStyle=color;
+  ctx.arc(last.x,last.y,3,0,Math.PI*2);ctx.fill();
+}
+
+// ── KPI Cards ─────────────────────────────────────────────────────
+function renderKPI() {
+  const kpis = [
+    {label:'今日填寫人數',val:state.kpi.today,dec:0,sfx:'',sub:'↑12% 較昨日',color:T,icon:'👥',spark:[210,228,242,235,state.kpi.today]},
+    {label:'平均滿意度',  val:state.kpi.avg,  dec:2,sfx:'★',sub:'本日加權平均',color:T3,icon:'⭐',spark:[4.1,4.3,3.9,4.5,state.kpi.avg]},
+    {label:'本月累計筆數',val:state.kpi.month,dec:0,sfx:'',sub:'2 月份累計',color:INFO,icon:'📋',spark:[1100,1250,980,1420,1071]},
+    {label:'NPS 淨推薦值',val:state.kpi.nps,  dec:0,sfx:'',sub:'良好等級 ≥50',color:PUR,icon:'🏆',spark:[65,68,70,71,72]},
+  ];
+  const row = document.getElementById('kpiRow');
+  row.innerHTML = '';
+  kpis.forEach((k,i) => {
+    const div = document.createElement('div');
+    div.className='kpi-card slide-up';
+    div.style.cssText=`background:rgba(255,255,255,.92);border:1.5px solid ${k.color}20;
+      box-shadow:0 4px 20px ${k.color}15,0 1px 4px rgba(0,0,0,.04);
+      animation-delay:${i*.07}s;`;
+    div.innerHTML=`
+      <div class="card-top-bar" style="background:linear-gradient(90deg,transparent,${k.color},transparent);"></div>
+      <div class="kpi-card-inner-circle" style="background:${k.color}0a;border:1px solid ${k.color}18;"></div>
+      <div class="kpi-top-row">
+        <span class="kpi-label">${k.label}</span>
+        <div class="kpi-icon-box" style="background:${k.color}14;">${k.icon}</div>
+      </div>
+      <div class="kpi-val-row">
+        <div class="kpi-val" style="color:${k.color};" id="kpiVal${i}">0${k.sfx}</div>
+        <canvas id="kpiSpark${i}" width="80" height="32"></canvas>
+      </div>
+      <div class="kpi-sub">${k.sub}</div>`;
+    row.appendChild(div);
+    setTimeout(()=>{
+      animateNumber(document.getElementById(`kpiVal${i}`),0,k.val,k.dec,k.sfx);
+      drawSpark(`kpiSpark${i}`,k.spark,k.color);
+    },100+i*70);
+  });
+}
+
+// ── Gauges ────────────────────────────────────────────────────────
+function renderGauges() {
+  const gauges=[
+    {label:'醫療品質',value:4.7,color:T},{label:'親切度',value:4.8,color:T2},
+    {label:'環境整潔',value:4.5,color:INFO},{label:'等待時間',value:3.6,color:WARN},
+  ];
+  const grid=document.getElementById('gaugeGrid');
+  grid.innerHTML='';
+  gauges.forEach(g=>{
+    const r=40,cx=52,cy=52,stroke=8,max=5;
+    const circ=2*Math.PI*r,dash=circ*(g.value/max)*0.75,offset=circ*0.125;
+    const div=document.createElement('div');
+    div.className='gauge-item';
+    div.innerHTML=`
+      <svg width="104" height="104" viewBox="0 0 104 104">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#e0f5f3" stroke-width="${stroke}"
+          stroke-dasharray="${circ*0.75} ${circ*0.25}" stroke-dashoffset="${-offset}" stroke-linecap="round"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${g.color}" stroke-width="${stroke}"
+          stroke-dasharray="${dash} ${circ-dash}" stroke-dashoffset="${-offset}" stroke-linecap="round"
+          style="transition:stroke-dasharray 1s ease;"/>
+        <text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="14" font-weight="800" fill="${g.color}">${g.value.toFixed(1)}</text>
+        <text x="${cx}" y="${cy+14}" text-anchor="middle" font-size="9" fill="#6bb5b0">/ ${max}</text>
+      </svg>
+      <span class="gauge-label">${g.label}</span>`;
+    grid.appendChild(div);
+  });
+}
+
+// ── Trend Chart ───────────────────────────────────────────────────
+function renderTrendChart() {
+  const ctx=document.getElementById('trendChart').getContext('2d');
+  if(charts.trend) charts.trend.destroy();
+  const grad=ctx.createLinearGradient(0,0,0,220);
+  grad.addColorStop(0,hexToRgba(T,.25));grad.addColorStop(1,hexToRgba(T,.01));
+  const grad2=ctx.createLinearGradient(0,0,0,220);
+  grad2.addColorStop(0,hexToRgba(INFO,.18));grad2.addColorStop(1,hexToRgba(INFO,0));
+  charts.trend=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:state.trend.map(d=>d.date),
+      datasets:[
+        {label:'平均分',data:state.trend.map(d=>d.avg),
+          borderColor:T,borderWidth:2.5,backgroundColor:grad,fill:true,
+          pointBackgroundColor:T,pointRadius:4,pointHoverRadius:6,
+          pointHoverBackgroundColor:'#fff',pointHoverBorderColor:T,pointHoverBorderWidth:2.5,
+          tension:.4,yAxisID:'y'},
+        {label:'填寫數',data:state.trend.map(d=>d.count),
+          borderColor:INFO,borderWidth:1.5,backgroundColor:grad2,fill:true,
+          borderDash:[4,2],pointRadius:0,tension:.4,yAxisID:'y1'},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#6bb5b0',font:{size:11}}},
+        y:{min:3.5,max:5,grid:{color:'#d8f0ed',drawBorder:false},ticks:{color:'#6bb5b0',font:{size:11}}},
+        y1:{position:'right',grid:{display:false},ticks:{color:'#94b8b4',font:{size:10}}},
+      },
+    }
+  });
+}
+
+// ── Dept Bar Chart ────────────────────────────────────────────────
+function renderDeptChart() {
+  const ctx=document.getElementById('deptChart').getContext('2d');
+  if(charts.dept) charts.dept.destroy();
+  charts.dept=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:state.depts.map(d=>d.dept),
+      datasets:[{
+        label:'滿意度',
+        data:state.depts.map(d=>d.avg),
+        backgroundColor:state.depts.map(d=>{
+          const c=barColor(d.avg);
+          const grad=ctx.createLinearGradient(0,0,0,230);
+          grad.addColorStop(0,c);grad.addColorStop(1,hexToRgba(c,.5));
+          return grad;
+        }),
+        borderRadius:8,borderSkipped:false,barThickness:28,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#6bb5b0',font:{size:10}}},
+        y:{min:3,max:5,grid:{color:'#d8f0ed',drawBorder:false},ticks:{color:'#6bb5b0',font:{size:11}}},
+      },
+    }
+  });
+}
+
+// ── Pie Chart ─────────────────────────────────────────────────────
+function renderPieChart() {
+  const ctx=document.getElementById('pieChart').getContext('2d');
+  if(charts.pie) charts.pie.destroy();
+  charts.pie=new Chart(ctx,{
+    type:'doughnut',
+    data:{
+      labels:state.pie.map(p=>p.name),
+      datasets:[{
+        data:state.pie.map(p=>p.value),
+        backgroundColor:state.pie.map(p=>p.color),
+        borderColor:'#fff',borderWidth:2,hoverOffset:6,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      cutout:'63%',
+      plugins:{tooltip:{callbacks:{
+        label:ctx=>`${ctx.label}: ${ctx.parsed}%`,
+      }}},
+    }
+  });
+  // Pie legend
+  const leg=document.getElementById('pieLegend');
+  leg.innerHTML='';
+  state.pie.forEach(p=>{
+    const row=document.createElement('div');
+    row.className='pie-legend-row';
+    row.innerHTML=`
+      <div class="pie-legend-dot" style="background:${p.color};"></div>
+      <div class="pie-bar-wrap"><div class="pie-bar-fill" style="width:${p.value}%;background:${p.color};"></div></div>
+      <span class="pie-pct" style="color:${p.muted||'#4a8a84'};">${p.value}%</span>`;
+    leg.appendChild(row);
+  });
+}
+
+// ── Radar Chart ───────────────────────────────────────────────────
+function renderRadarChart(canvasId) {
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  if(charts[canvasId]) charts[canvasId].destroy();
+  charts[canvasId]=new Chart(ctx,{
+    type:'radar',
+    data:{
+      labels:radarData.labels,
+      datasets:[{
+        label:'平均',data:radarData.values,
+        borderColor:T,borderWidth:2,
+        backgroundColor:hexToRgba(T,.18),
+        pointBackgroundColor:T,pointRadius:3,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      scales:{r:{
+        min:3,max:5,ticks:{display:false},
+        grid:{color:'#d0eeeb'},
+        pointLabels:{color:'#4a8a84',font:{size:10,weight:'600'}},
+        angleLines:{color:'#d0eeeb'},
+      }},
+    }
+  });
+}
+
+// ── Monthly Chart ─────────────────────────────────────────────────
+function renderMonthlyChart() {
+  const ctx=document.getElementById('monthlyChart').getContext('2d');
+  if(charts.monthly) charts.monthly.destroy();
+  charts.monthly=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:monthlyData.labels,
+      datasets:[{
+        label:'月均分',data:monthlyData.values,
+        borderColor:T3,borderWidth:2.5,
+        backgroundColor:'transparent',
+        pointBackgroundColor:T3,pointRadius:5,pointHoverRadius:7,
+        tension:.4,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#6bb5b0',font:{size:11}}},
+        y:{min:3.8,max:4.6,grid:{color:'#d8f0ed',drawBorder:false},ticks:{color:'#6bb5b0',font:{size:10}}},
+      },
+    }
+  });
+}
+
+// ── Ranking ───────────────────────────────────────────────────────
+function renderRanking() {
+  const sorted=[...state.depts].sort((a,b)=>b.avg-a.avg);
+  const list=document.getElementById('rankingList');
+  list.innerHTML='';
+  sorted.forEach((d,i)=>{
+    const row=document.createElement('div');
+    row.className='rank-row';
+    const fillColor = i===0?`linear-gradient(90deg,${T},${T2})`:i===1?T2:'#5dd8cf';
+    row.innerHTML=`
+      <div class="rank-badge" style="background:${i<3?T:T+'20'};color:${i<3?'#fff':T};">${i+1}</div>
+      <span class="rank-name">${d.dept}</span>
+      <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${(d.avg/5)*100}%;background:${fillColor};"></div></div>
+      <span class="rank-val" style="color:${i<3?T:'#4a8a84'};">${d.avg.toFixed(1)}</span>`;
+    list.appendChild(row);
+  });
+}
+
+// ── Progress Rows ─────────────────────────────────────────────────
+function renderProgRows() {
+  const wrap=document.getElementById('progRows');
+  wrap.innerHTML='';
+  progData.forEach(p=>{
+    const row=document.createElement('div');
+    row.className='prog-row';
+    row.innerHTML=`
+      <span class="prog-label">${p.label}</span>
+      <div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:${(p.value/5)*100}%;background:linear-gradient(90deg,${p.color},${p.color}99);"></div></div>
+      <span class="prog-val" style="color:${p.color};">${p.value.toFixed(1)}</span>`;
+    wrap.appendChild(row);
+  });
+}
+
+// ── Comments ──────────────────────────────────────────────────────
+function renderComments() {
+  const colorMap={5:T,4:T,3:WARN,2:WARN,1:ERR};
+  const bgMap={5:'#f0fdfc',4:'#f0fdfc',3:'#fffbeb',2:'#fffbeb',1:'#fef2f2'};
+  const list=document.getElementById('commentList');
+  list.innerHTML='';
+  comments.forEach(c=>{
+    const col=colorMap[c.star],bg=bgMap[c.star];
+    const stars='★'.repeat(c.star)+'☆'.repeat(5-c.star);
+    const div=document.createElement('div');
+    div.className='comment-card';
+    div.style.cssText=`background:${bg};border:1px solid ${col}30;`;
+    div.innerHTML=`
+      <div class="comment-top">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="comment-dept" style="background:${col}18;color:${col};">${c.dept}</span>
+          <span style="color:#f59e0b;font-size:.85rem;">${'★'.repeat(c.star)}${'☆'.repeat(5-c.star)}</span>
+        </div>
+        <span class="comment-time">${c.time}</span>
+      </div>
+      <p class="comment-text">${c.text}</p>`;
+    list.appendChild(div);
+  });
+}
+
+// ── Spark in Header ───────────────────────────────────────────────
+function renderHeaderSpark() {
+  drawSpark('sparkCanvas', state.trend.map(d=>d.avg), T);
+}
+
+// ── Update Header Avg ─────────────────────────────────────────────
+function updateHeaderAvg(newAvg) {
+  animateNumber(document.getElementById('headerAvg'), state.kpi.avg, newAvg, 2, '');
+}
+
+// ── Banner Numbers ────────────────────────────────────────────────
+function updateBanner() {
+  animateNumber(document.getElementById('bannerToday'),0,state.kpi.today,0,'則');
+  animateNumber(document.getElementById('bannerAvg'),0,state.kpi.avg,2,'★');
+}
+
+// ── Tab Switching ─────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    const pane=document.getElementById('tab-'+btn.dataset.tab);
+    pane.classList.add('active');
+    if(btn.dataset.tab==='survey') updateBanner();
+  });
+});
+
+// ── Filter Chips ──────────────────────────────────────────────────
+document.querySelectorAll('.filter-chip').forEach(chip=>{
+  chip.addEventListener('click',()=>{
+    document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+  });
+});
+
+// ── Star Rating ───────────────────────────────────────────────────
+const starMsgs=['非常不滿意','不滿意','普通','滿意','非常滿意'];
+document.querySelectorAll('#starRow .star').forEach(star=>{
+  star.addEventListener('click',()=>{
+    const val=parseInt(star.dataset.val);
+    state.rating=val;
+    document.querySelectorAll('#starRow .star').forEach((s,i)=>{
+      s.classList.toggle('active', i<val);
+    });
+    const msg=document.getElementById('starMsg');
+    msg.style.display='inline-flex';
+    document.getElementById('starMsgText').textContent=starMsgs[val-1];
+  });
+  star.addEventListener('mouseenter',()=>{
+    const val=parseInt(star.dataset.val);
+    document.querySelectorAll('#starRow .star').forEach((s,i)=>s.classList.toggle('active',i<val));
+  });
+  star.addEventListener('mouseleave',()=>{
+    document.querySelectorAll('#starRow .star').forEach((s,i)=>s.classList.toggle('active',i<state.rating));
+  });
+});
+
+// ── Char Count ────────────────────────────────────────────────────
+document.getElementById('commentInput').addEventListener('input',function(){
+  document.getElementById('charCount').textContent=this.value.length;
+});
+
+// ── Submit ────────────────────────────────────────────────────────
+document.getElementById('submitBtn').addEventListener('click',()=>{
+  const rating=state.rating;
+  const dept=document.getElementById('deptSelect').value;
+  if(!rating||!dept){showToast('請選擇部門並給予星等評分');return;}
+
+  // Update KPI
+  const oldAvg=state.kpi.avg;
+  state.kpi.today++;
+  state.kpi.avg=Math.round(((oldAvg*state.kpi.today+rating)/(state.kpi.today+1))*100)/100;
+  state.kpi.month++;
+
+  // Update trend
+  const last=state.trend[state.trend.length-1];
+  state.trend[state.trend.length-1]={...last,avg:Math.round(((last.avg*40+rating)/41)*100)/100};
+
+  // Update depts
+  state.depts=state.depts.map(d=>
+    d.dept===dept?{...d,avg:Math.round(((d.avg*30+rating)/31)*100)/100}:d
+  );
+
+  // Update pie
+  const starKeys=['1 星','2 星','3 星','4 星','5 星'];
+  state.pie=state.pie.map(p=>p.name===starKeys[rating-1]?{...p,value:p.value+1}:p);
+
+  // Show success
+  document.getElementById('surveyForm').style.display='none';
+  document.getElementById('surveySuccess').style.display='block';
+  showToast('✅ 感謝您的寶貴意見！');
+
+  // Refresh charts
+  setTimeout(()=>{
+    renderDeptChart();
+    renderPieChart();
+    renderRanking();
+    renderHeaderSpark();
+    document.getElementById('headerAvg').textContent=state.kpi.avg.toFixed(2);
+  },200);
+
+  setTimeout(()=>{
+    document.getElementById('surveyForm').style.display='block';
+    document.getElementById('surveySuccess').style.display='none';
+    state.rating=0;
+    document.querySelectorAll('#starRow .star').forEach(s=>s.classList.remove('active'));
+    document.getElementById('starMsg').style.display='none';
+    document.getElementById('deptSelect').value='';
+    document.getElementById('commentInput').value='';
+    document.getElementById('charCount').textContent='0';
+    renderKPI();
+  },2800);
+});
+
+// ── Quick Chips ───────────────────────────────────────────────────
+document.querySelectorAll('.quick-chips .chip').forEach(chip=>{
+  chip.addEventListener('click',()=>{
+    document.getElementById('aiInput').value=chip.textContent;
+  });
+});
+
+// ── AI Analysis ───────────────────────────────────────────────────
+let aiBarChart=null,aiRadarChartI=null;
+
+function runAI() {
+  const q=document.getElementById('aiInput').value.trim();
+  if(!q) return;
+  document.getElementById('aiLoading').style.display='block';
+  document.getElementById('aiResult').style.display='none';
+  setTimeout(()=>{
+    let res=AI_MAP.default;
+    if(q.includes('等待')||q.includes('時間')) res=AI_MAP.wait;
+    else if(q.includes('最佳')||q.includes('第一')||q.includes('表現')) res=AI_MAP.best;
+
+    document.getElementById('aiText').textContent=res.text;
+    document.getElementById('aiInsight').textContent=res.insight;
+    const tagsEl=document.getElementById('aiTags');
+    tagsEl.innerHTML=res.tags.map(t=>`<span class="ai-tag">#${t}</span>`).join('');
+
+    // Render AI bar chart
+    const bctx=document.getElementById('aiBarChart').getContext('2d');
+    if(aiBarChart) aiBarChart.destroy();
+    const grad=bctx.createLinearGradient(0,0,0,200);
+    grad.addColorStop(0,T);grad.addColorStop(1,hexToRgba(T,.35));
+    aiBarChart=new Chart(bctx,{
+      type:'bar',
+      data:{
+        labels:state.depts.slice(0,6).map(d=>d.dept),
+        datasets:[{label:'滿意度',data:state.depts.slice(0,6).map(d=>d.avg),
+          backgroundColor:grad,borderRadius:6,barThickness:24}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#6bb5b0',font:{size:10}}},
+          y:{min:3,max:5,grid:{color:'#d8f0ed',drawBorder:false},ticks:{color:'#6bb5b0',font:{size:11}}},
+        }}
+    });
+
+    // Render AI radar
+    renderRadarChart('aiRadarChart');
+
+    document.getElementById('aiLoading').style.display='none';
+    document.getElementById('aiResult').style.display='block';
+    document.getElementById('aiResult').style.animation='fadeUp .5s ease';
+  },1600);
+}
+
+document.getElementById('aiBtn').addEventListener('click',runAI);
+document.getElementById('aiInput').addEventListener('keydown',e=>{if(e.key==='Enter')runAI();});
+
+// ── Init All ──────────────────────────────────────────────────────
+function init() {
+  renderKPI();
+  renderGauges();
+  renderTrendChart();
+  renderDeptChart();
+  renderPieChart();
+  renderRadarChart('radarChart');
+  renderMonthlyChart();
+  renderRanking();
+  renderProgRows();
+  renderComments();
+  renderHeaderSpark();
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
